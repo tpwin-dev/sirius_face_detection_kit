@@ -35,6 +35,7 @@ class _MCameraPreviewState extends State<MCameraPreview> {
   void processCameraFrame() async {
     try {
       _processing = true;
+      print(_lastFrame!.format.group.name);
     } catch (e, s) {
       print(e.toString());
     } finally {
@@ -48,6 +49,7 @@ class _MCameraPreviewState extends State<MCameraPreview> {
         ? LayoutBuilder(
             builder: (context, constraints) {
               final previewSize = cameraController!.value.previewSize!;
+
               return SizedBox(
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
