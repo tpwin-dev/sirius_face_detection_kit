@@ -76,3 +76,22 @@ class _MCameraPreviewState extends State<MCameraPreview> {
         : Center(child: CircularProgressIndicator());
   }
 }
+
+
+/*
+
+sirius_face_detection_kit/
+  lib/
+    detector/
+      face_detector.dart
+      face_detection_result.dart
+    recognition/
+      face_embedder.dart
+      face_matcher.dart
+    image/
+      image_preprocessor.dart
+      box_mapper.dart
+    tflite/
+      tflite_runtime.dart
+
+*/
