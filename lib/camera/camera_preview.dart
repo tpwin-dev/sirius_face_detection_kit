@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+
+final isDesktopRuntime =
+    Platform.isMacOS || Platform.isLinux || Platform.isMacOS;
 
 class MCameraPreview extends StatefulWidget {
   const MCameraPreview({super.key});
@@ -19,8 +23,15 @@ class _MCameraPreviewState extends State<MCameraPreview> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       final cameras = await availableCameras();
-      final desc = cameras.first;
-      cameraController = CameraController(desc, ResolutionPreset.high);
+
+      final desc = cameras.firstWhere(
+        (element) =>
+            element.lensDirection ==
+            (isDesktopRuntime
+                ? CameraLensDirection.external
+                : CameraLensDirection.front),
+      );
+      cameraController = CameraController(desc, ResolutionPreset.max);
       await cameraController!.initialize();
       await cameraController!.startImageStream((image) {
         _lastFrame = image;
@@ -32,6 +43,13 @@ class _MCameraPreviewState extends State<MCameraPreview> {
     });
   }
 
+  @override
+  void dispose() async {
+    await cameraController?.stopImageStream();
+    await cameraController?.dispose();
+    super.dispose();
+  }
+
   void processCameraFrame() async {
     try {
       _processing = true;
@@ -39,7 +57,7 @@ class _MCameraPreviewState extends State<MCameraPreview> {
     } catch (e, s) {
       print(e.toString());
     } finally {
-      _processing = false;
+      // _processing = false;
     }
   }
 
@@ -49,27 +67,43 @@ class _MCameraPreviewState extends State<MCameraPreview> {
         ? LayoutBuilder(
             builder: (context, constraints) {
               final previewSize = cameraController!.value.previewSize!;
-
-              return SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio:
-                        max(previewSize.width, previewSize.height) /
-                        min(previewSize.width, previewSize.height),
-                    child: ClipRect(
-                      child: FittedBox(
-                        fit: BoxFit.fill,
-                        child: SizedBox(
-                          width: previewSize.height,
-                          height: previewSize.width,
-                          child: CameraPreview(cameraController!),
-                        ),
+              final parentSize = constraints.biggest;
+              print(previewSize);
+              print(constraints.biggest);
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: FittedBox(
+                      fit: isDesktopRuntime ? .fitWidth : .cover,
+                      child: SizedBox(
+                        width: previewSize.height,
+                        height: isDesktopRuntime ? null : previewSize.width,
+                        child: CameraPreview(cameraController!),
                       ),
                     ),
                   ),
-                ),
+                  // SizedBox(
+                  //   width: constraints.maxWidth,
+                  //   height: constraints.maxHeight,
+                  //   child: Center(
+                  //     child: AspectRatio(
+                  //       aspectRatio:
+                  //           max(previewSize.width, previewSize.height) /
+                  //           min(previewSize.width, previewSize.height),
+                  //       child: ClipRect(
+                  //         child: FittedBox(
+                  //           fit: BoxFit.fill,
+                  //           child: SizedBox(
+                  //             width: previewSize.height,
+                  //             height: previewSize.width,
+                  //             child: CameraPreview(cameraController!),
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                ],
               );
             },
           )
